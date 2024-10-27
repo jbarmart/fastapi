@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'fastapi'
+    static_configs:
+      - targets: ['localhost:8080']
+
+
+#(venv) /Users/jacobbarasch/PycharmProjects/fastapi/app [mock_test]
+#% prometheus --config.file=prometheus.yml
+
