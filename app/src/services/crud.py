@@ -20,3 +20,13 @@ def create_user(db: Session, user_id: int, username: str):
         raise HTTPException(status_code=400, detail="User already exists")
     db.refresh(db_user)
     return db_user
+
+# python
+def update_user(db: Session, user_id: int, username: str):
+    db_user = db.query(User).filter(User.user_id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    db_user.username = username
+    db.commit()
+    db.refresh(db_user)
+    return db_user

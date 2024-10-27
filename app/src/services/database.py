@@ -1,9 +1,8 @@
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, MetaData, Table, select
+from sqlalchemy import create_engine, MetaData, Table
 from app.src.models.models import Base
-from fastapi import Depends
+from app.config import settings
 
-# Fix the typo in the database name to match the reference in create_all()
 engine = create_engine("sqlite:///users.db")
 #
 metadata = MetaData()

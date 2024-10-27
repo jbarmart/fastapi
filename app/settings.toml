@@ -1,0 +1,6 @@
+[testing]
+VALUE = "Testing"
+
+[development]
+VALUE = "Local-Local-Local-Local-Local"
+# Var resfreshes
