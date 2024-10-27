@@ -4,6 +4,7 @@ from app.src.models.models import Base
 from app.config import settings
 
 engine = create_engine("sqlite:///users.db")
+#engine = create_engine("sqlite:///:memory:")
 #
 metadata = MetaData()
 #

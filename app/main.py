@@ -2,7 +2,8 @@ from typing import Optional
 import time
 import uvicorn
 from fastapi import FastAPI, Request, Depends, HTTPException, APIRouter, Response, Header
-from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from prometheus_client import make_asgi_app
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -10,6 +11,8 @@ from app.src.models import schemas
 from app.src.services import crud
 from app.src.services.database import get_db
 from app.src.services.token import verify_token
+from app.src.services.metrics import AUTH_REQUEST
+
 
 app = FastAPI(
     title="User",
@@ -21,20 +24,26 @@ app = FastAPI(
 router = APIRouter(
     prefix="/api/user",
     tags=["user"],
-    responses={404: {"description": "Not Found"}},
-    dependencies=[Depends(verify_token)],
+    responses={404: {"description": "Not Found"}}
 )
 app.include_router(router)
 
-# Initialize Prometheus Instrumentator
-Instrumentator().instrument(app, metric_namespace='baywatch').expose(app, endpoint="/metrics")
+# Define a function that takes a request and returns the metric
+def auth_request_metric(request):
+    return AUTH_REQUEST
+
+Instrumentator().instrument(
+    app, metric_namespace='baywatch').expose(
+    app, endpoint="/metrics").add(
+    metrics.default(
+        metric_namespace="baywatch"), auth_request_metric)
 
 @app.get("/health")
 def health_check():
     return settings.VALUE
 
 @router.get("", response_model=schemas.UserResponse)
-@app.get("/get_user/{user_id}")
+@app.get("/get_user/{user_id}", dependencies=[Depends(verify_token)])
 def read_user(user_id: int, db: Session = Depends(get_db)):
     """"
 curl -X GET "http://localhost:8080/get_user/1"
@@ -46,7 +55,7 @@ curl -X GET "http://localhost:8080/get_user/1"
 
 
 @router.post("", status_code=201, response_model=schemas.UserCreate)
-@app.post("/create_user")
+@app.post("/create_user", dependencies=[Depends(verify_token)])
 def create_user(user: schemas.UserInput, db: Session = Depends(get_db)):
     """
 curl -X POST "http://localhost:8080/create_user" \
@@ -60,7 +69,7 @@ curl -X POST "http://localhost:8080/create_user" \
         raise HTTPException(status_code=500, detail=f"Unexpected error occurred: {e}.")
 
 @router.put("", status_code=201, response_model=schemas.UserResponse)
-@app.put("/update_user")
+@app.put("/update_user", dependencies=[Depends(verify_token)])
 def update_user(user_id: int, user: schemas.UserInput, db: Session = Depends(get_db)):
     """
 curl -X 'PUT' \
